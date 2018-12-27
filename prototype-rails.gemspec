@@ -10,6 +10,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency('rails', '~> 4.0')
   spec.add_dependency('nokogiri', '~> 1.6')
+  spec.add_dependency('responders', '~> 2.0')
   spec.add_development_dependency('mocha')
   spec.license = "MIT"
 end

@@ -65,6 +65,8 @@ module ActiveSupport
   end
 end
 
+ActiveSupport::TestCase.test_order = :random
+
 class RoutedRackApp
   attr_reader :routes
 
