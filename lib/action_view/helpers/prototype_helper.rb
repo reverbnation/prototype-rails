@@ -137,7 +137,7 @@ module ActionView
           "new Ajax.Updater(#{update}, "
 
         url_options = options[:url]
-        function << "'#{ERB::Util.html_escape(escape_javascript(url_for(url_options)))}'"
+        function << "'#{escape_javascript(url_for(url_options))}'"
         function << ", #{javascript_options})"
 
         function = "#{options[:before]}; #{function}" if options[:before]
@@ -532,7 +532,11 @@ module ActionView
           end
 
           def javascript_object_for(object)
-            ::ActiveSupport::JSON.encode(object)
+            if object.is_a?(ActionView::JsonLiteral)
+              object.to_s
+            else
+              ::ActiveSupport::JSON.encode(object)
+            end
           end
 
           def arguments_for_call(arguments, block = nil)

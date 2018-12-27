@@ -1,14 +1,14 @@
 require 'active_support/core_ext/module/aliasing'
-require 'action_view/vendor/html-scanner'
 require 'action_dispatch/testing/assertions'
-require 'action_dispatch/testing/assertions/selector'
+require 'rails/dom/testing/assertions/selector_assertions'
 
 #--
 # Copyright (c) 2006 Assaf Arkin (http://labnotes.org)
 # Under MIT and/or CC By license.
 #++
 
-ActionDispatch::Assertions::SelectorAssertions.module_eval do
+module PrototypeRails
+  module SelectorAssertions
   # Selects content from the RJS response.
   #
   # === Narrowing down
@@ -94,10 +94,10 @@ ActionDispatch::Assertions::SelectorAssertions.module_eval do
         id = args.shift
         insertion = "insert_#{position}".to_sym
         raise ArgumentError, "Unknown RJS insertion type #{position}" unless RJS_STATEMENTS[insertion]
-        statement = "(#{RJS_STATEMENTS[insertion]})"
+        statement = "#{RJS_STATEMENTS[insertion]}"
       else
         raise ArgumentError, "Unknown RJS statement type #{rjs_type}" unless RJS_STATEMENTS[rjs_type]
-        statement = "(#{RJS_STATEMENTS[rjs_type]})"
+        statement = "#{RJS_STATEMENTS[rjs_type]}"
       end
     else
       statement = "#{RJS_STATEMENTS[:any]}"
@@ -115,11 +115,8 @@ ActionDispatch::Assertions::SelectorAssertions.module_eval do
       when :remove, :show, :hide, :toggle
         matches = @response.body.match(pattern)
       else
-        @response.body.gsub(pattern) do |match|
-          html = unescape_rjs(match)
-          matches ||= []
-          matches.concat HTML::Document.new(html).root.children.select { |n| n.tag? }
-          ""
+        matches = @response.body.scan(pattern).map do |match|
+          Nokogiri::HTML::DocumentFragment.parse(unescape_rjs(match[0]))
         end
     end
 
@@ -128,8 +125,8 @@ ActionDispatch::Assertions::SelectorAssertions.module_eval do
       if block_given? && !([:remove, :show, :hide, :toggle].include? rjs_type)
         begin
           @selected ||= nil
-          in_scope, @selected = @selected, matches
-          yield matches
+          in_scope, @selected = @selected, matches[0]
+          yield matches[0]
         ensure
           @selected = in_scope
         end
@@ -193,7 +190,6 @@ ActionDispatch::Assertions::SelectorAssertions.module_eval do
       response_from_page_without_rjs
     end
   end
-  alias_method_chain :response_from_page, :rjs
 
   # Unescapes a RJS string.
   def unescape_rjs(rjs_string)
@@ -207,4 +203,5 @@ ActionDispatch::Assertions::SelectorAssertions.module_eval do
     unescaped.gsub!(RJS_PATTERN_UNICODE_ESCAPED_CHAR) {|u| [$1.hex].pack('U*')}
     unescaped
   end
+end
 end
